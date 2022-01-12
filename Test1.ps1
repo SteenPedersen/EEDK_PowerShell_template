@@ -1,6 +1,7 @@
 # Run script
 # Return the status in CustomProps  
 # Steen Pedersen, 2022 - Version 004
+#
 # ------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------
@@ -100,12 +101,13 @@ function place_your_code_here_function {
 
 }
 
+
 ################
 # Main section #
 ################
 function main()
 {
-    
+
     # Write start time 
     Add-Content  $g_temp_status_file ($g_ISO_Date_with_time+'  Start :'+$PSCommandPath+$args)
     
