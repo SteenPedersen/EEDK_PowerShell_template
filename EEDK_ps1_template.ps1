@@ -6,6 +6,8 @@
 # ------------------------------------------------------------------------------------------------
 #
 # Preapare some environmental variables
+$g_agentFound = $false
+$g_agentNotFound_ExitCode = 100
 $g_results =''
 $g_temp_status_file = $env:temp+'\EEDK_PS1_Debug.log'
 # Working directory
@@ -27,8 +29,7 @@ function get_path_to_agent_tools()
         #Write-Output "64-bit OS"
         Add-Content  $g_temp_status_file "64-bit OS"
         $Global:g_path_to_agent = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Network Associates\ePolicy Orchestrator\Agent" -Name "Installed Path")."Installed Path"
-        $Global:g_Command_maconfig = $Global:g_path_to_agent+'\..\MACONFIG.exe'
-        $Global:g_Command_cmdagent = $Global:g_path_to_agent+'\..\CMDAGENT.exe'
+       
     }
     else
     {
@@ -36,9 +37,29 @@ function get_path_to_agent_tools()
         #Write-Output "32-bit OS"
         Add-Content  $g_temp_status_file "32-bit OS"
         $Global:g_path_to_agent = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Network Associates\ePolicy Orchestrator\Agent" -Name "Installed Path")."Installed Path"
-        $Global:g_Command_maconfig = $Global:g_path_to_agent+'\MACONFIG.exe'
-        $Global:g_Command_cmdagent = $Global:g_path_to_agent+'\CMDAGENT.exe'
+      
     }
+    
+    $g_agentFound =  Test-Path -Path ($Global:g_path_to_agent)
+
+    if ($g_agentFound)
+    {
+     
+        $Global:g_Command_maconfig = [System.IO.Path]::Combine( [System.IO.Directory]::GetParent($Global:g_path_to_agent).FullName,"MACONFIG.EXE")
+        $Global:g_Command_cmdagent = [System.IO.Path]::Combine( [System.IO.Directory]::GetParent($Global:g_path_to_agent).FullName,"CMDAGENT.EXE")
+    }
+    else
+    {   
+    
+        $agent_error = [String]::Format("Error locating McAfee Agent... Exiting with Code {0}.", $g_agentNotFound_ExitCode)
+                
+        Write-Host $agent_error -ForegroundColor Red
+
+        Exit $g_agentNotFound_ExitCode
+        
+    }
+
+
 }
 
 function write_customprops()
@@ -48,28 +69,48 @@ function write_customprops()
             [string]$PropsNo
         )
     
-    $Parms = ' -custom -prop'+$PropsNo+' "'+$Value+'"'
     
+    $Parms = [String]::Format("-custom -prop{0} ""{1}""", $PropsNo, $Value)
+        
     Add-Content $g_temp_status_file "Run $Global:g_Command_maconfig $Parms"
 
     try {
         $process_status = Start-Process  $Global:g_Command_maconfig -ArgumentList $Parms -NoNewWindow -PassThru -Wait        
+        Write-Host ([string]::Format("Executed successfully process: {0} with params: {1}",$Global:g_Command_maconfig,$Parms)) -ForegroundColor Green 
     }
     catch {
         "Error running $Global:g_Command_maconfig"
-        Add-Content $g_temp_status_file "Error running $Global:g_Command_maconfig $Parms"
+
+        $cmd_exception =$_.Exception
+        $cmd_error = [String]::Format("Error running: {0} with Params: {1}, The following exception occured: {2}",$Global:g_Command_maconfig, $Parms, $cmd_exception)
+
+        Add-Content $g_temp_status_file $cmd_error
+        Write-Host $cmd_error -ForegroundColor Red
+
     }
    
     # Perform CMDAGENT.EXE -p = Collect and Send Props
     #%comspec% /c "%agent_path%\cmdagent.exe" -p
     #& $Command_cmdagent @('-p')
+
+    $Parms = "-p"
+    
     Add-Content $g_temp_status_file "Run $Global:g_Command_cmdagent -p"
     try {
-        $process_status = Start-Process  $Global:g_Command_cmdagent -ArgumentList '-p' -NoNewWindow -PassThru -Wait
+        $process_status = Start-Process  $Global:g_Command_cmdagent -ArgumentList $Parms -NoNewWindow -PassThru -Wait
+
+        Write-Host ([string]::Format("Executed successfully process: {0} with params: {1}",$Global:g_Command_cmdagent,$Parms)) -ForegroundColor Green 
+
     }
     catch {
         "Error running $Global:g_Command_cmdagent"
-        Add-Content $g_temp_status_file "Error running $Global:g_Command_cmdagent -p"
+
+        $cmd_exception =$_.Exception
+        $cmd_error = [String]::Format("Error running: {0} with Params: {1}, The following exception occured: {2}",$Global:g_Command_cmdagent, $Parms, $cmd_exception)
+
+        Add-Content $g_temp_status_file $cmd_error
+
+        Write-Host $cmd_error -ForegroundColor Red
     }
     
     }
