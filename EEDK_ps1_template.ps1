@@ -50,15 +50,10 @@ function get_path_to_agent_tools()
     }
     else
     {   
-    
-        $agent_error = [String]::Format("Error locating McAfee Agent... Exiting with Code {0}.", $g_agentNotFound_ExitCode)
-                
+        $agent_error = [String]::Format("Error locating McAfee Agent... Exiting with Code {0}.", $g_agentNotFound_ExitCode)                
         Write-Host $agent_error -ForegroundColor Red
-
-        Exit $g_agentNotFound_ExitCode
-        
+        Exit $g_agentNotFound_ExitCode        
     }
-
 
 }
 
@@ -97,10 +92,9 @@ function write_customprops()
     
     Add-Content $g_temp_status_file "Run $Global:g_Command_cmdagent -p"
     try {
+        
         $process_status = Start-Process  $Global:g_Command_cmdagent -ArgumentList $Parms -NoNewWindow -PassThru -Wait
-
         Write-Host ([string]::Format("Executed successfully process: {0} with params: {1}",$Global:g_Command_cmdagent,$Parms)) -ForegroundColor Green 
-
     }
     catch {
         "Error running $Global:g_Command_cmdagent"
