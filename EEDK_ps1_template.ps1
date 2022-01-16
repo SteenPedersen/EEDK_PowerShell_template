@@ -85,9 +85,7 @@ function write_customprops()
     }
    
     # Perform CMDAGENT.EXE -p = Collect and Send Props
-    #%comspec% /c "%agent_path%\cmdagent.exe" -p
-    #& $Command_cmdagent @('-p')
-
+    
     $Parms = "-p"
     
     Add-Content $g_temp_status_file "Run $Global:g_Command_cmdagent -p"
