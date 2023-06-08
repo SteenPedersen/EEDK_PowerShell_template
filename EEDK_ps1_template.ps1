@@ -129,8 +129,11 @@ function place_your_code_here_function {
     # Set the value to be returned to ePO - max 255 char
     $Global:g_results = "First test"
     # Write the results to the Custom Props
+    # Maximum length of Custom Props is 255 
+    # Setting the lenght to max 230 char before adding the date at the end.
+    $Global:g_results = $Global:g_results[0..230] -Join ""
     $Global:g_results = $Global:g_results +", AT: "+$g_ISO_Date_with_time
-
+    
 }
 
 ################
